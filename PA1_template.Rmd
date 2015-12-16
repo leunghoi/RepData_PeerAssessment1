@@ -7,19 +7,41 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+unzip("activity.zip")
+activity <- read.csv("activity.csv")
+head(activity)
 
 ## What is mean total number of steps taken per day?
-
-
+library(dplyr)
+table(activity$date)
+bydate <- group_by(activity, date)
+step_per_day <- summarize(bydate, steps=sum(steps))
+mean(step_per_day$steps, na.rm=TRUE)
 
 ## What is the average daily activity pattern?
-
+table(activity$interval)
+byinterval <- group_by(activity, interval)
+step_by_interval <- summarize(byinterval, steps=mean(steps, na.rm=TRUE))
+plot(step_by_interval)
 
 
 ## Imputing missing values
-
-
+table(is.na(activity$steps))
+#step_by_interval$interval <- as.factor(step_by_interval$interval)
+#activity$interval <- as.factor(activity$interval)
+imactivity <- merge(activity, step_by_interval, by.x="interval", by.y="interval" )
+imactivity$steps.x[is.na(imactivity$steps.x)] <- 
+    imactivity$steps.y[is.na(imactivity$steps.x)]
+bydate <- group_by(imactivity, date)
+step_per_day <- summarize(bydate, steps=sum(steps.x))    
+hist(step_per_day$steps)
 
 ## Are there differences in activity patterns between weekdays and weekends?
+activity$weekdays <- as.factor(weekdays(as.Date(activity$date)))
+activity$weekdays <- factor(activity$weekdays, levels(activity$weekdays)[c(2,6,7,5,1,3,4)])
+table(activity$weekdays)
+
+byweekdays <- group_by(activity, weekdays, interval)
+step_by_iw <- summarize(byweekdays, steps=mean(steps, na.rm=TRUE))
+library(ggplot2)
+qplot(interval, steps, data=step_by_iw, facets=weekdays~., geom=c("line"))
