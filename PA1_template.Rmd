@@ -20,17 +20,29 @@ head(table(activity$date))
 bydate <- group_by(activity, date)
 step_per_day <- summarize(bydate, steps=sum(steps))
 mean(step_per_day$steps, na.rm=TRUE)
+median(step_per_day$steps, na.rm=TRUE)
 ```
+  
+The mean of the total steps taken per day is 10,766.19.  
+The median of the total steps taken per day is 10,765.
 
 ## What is the average daily activity pattern?
 ```{r}
 head(table(activity$interval))
 byinterval <- group_by(activity, interval)
 step_by_interval <- summarize(byinterval, steps=mean(steps, na.rm=TRUE))
-plot(step_by_interval)
+plot(step_by_interval, type="l", ylab="Average Steps in Interval",
+     main="Average Daily Activity Pattern")
+step_by_interval[step_by_interval$steps == max(step_by_interval$steps), ]
+step_by_interval[65:80,]
 ```
+  
+- activities start between 5am and 6am.  
+- the interval with the max average steps is 8:35am.
 
 ## Imputing missing values
+Where steps is missing, the average steps for that particular interval (calcuated above)
+were used.
 ```{r}
 table(is.na(activity$steps))
 #step_by_interval$interval <- as.factor(step_by_interval$interval)
@@ -40,17 +52,25 @@ imactivity$steps.x[is.na(imactivity$steps.x)] <-
     imactivity$steps.y[is.na(imactivity$steps.x)]
 bydate <- group_by(imactivity, date)
 step_per_day <- summarize(bydate, steps=sum(steps.x))    
-hist(step_per_day$steps)
+hist(step_per_day$steps, breaks=20, main="Histogram of Steps per Day", 
+     xlab = "Steps per Day")
+mean(step_per_day$steps)
+median(step_per_day$steps)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 ```{r}
-activity$weekdays <- as.factor(weekdays(as.Date(activity$date)))
-activity$weekdays <- factor(activity$weekdays, levels(activity$weekdays)[c(2,6,7,5,1,3,4)])
-table(activity$weekdays)
+imactivity$weekdays <- as.factor(weekdays(as.Date(imactivity$date)))
+imactivity$weekdays <- factor(imactivity$weekdays, levels(imactivity$weekdays)[c(2,6,7,5,1,3,4)])
+table(imactivity$weekdays)
 
-byweekdays <- group_by(activity, weekdays, interval)
-step_by_iw <- summarize(byweekdays, steps=mean(steps, na.rm=TRUE))
+byweekdays <- group_by(imactivity, weekdays, interval)
+step_by_iw <- summarize(byweekdays, steps=mean(steps.x))
 library(ggplot2)
 qplot(interval, steps, data=step_by_iw, facets=weekdays~., geom=c("line"))
 ```
+  
+- There are not significant different between weekdays and weekends.    
+- It appears that walking activities start later after Thursday.  
+- Monday appears to be the most active day of the week.  
+- Sunday appears to be the less active day of the week.  
